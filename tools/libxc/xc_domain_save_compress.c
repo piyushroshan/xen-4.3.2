@@ -561,8 +561,8 @@ xen_pfn_t *xc_map_m2p(xc_interface *xch,
         entries[i].mfn = extent_start[i];
 
     m2p = xc_map_foreign_ranges(xch, DOMID_XEN,
-			m2p_size, prot, M2P_CHUNK_SIZE,
-			entries, m2p_chunks);
+            m2p_size, prot, M2P_CHUNK_SIZE,
+            entries, m2p_chunks);
     if (m2p == NULL)
     {
         PERROR("xc_mmap_foreign_ranges failed");
@@ -992,15 +992,24 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         }
     }
 
+    /* ----Changed
     if ( flags & XCFLAGS_CHECKPOINT_COMPRESS )
     {
         if (!(compress_ctx = xc_compression_create_context(xch, dinfo->p2m_size)))
         {
             ERROR("Failed to create compression context");
-            goto out;
-        }
+                goto out;
+           }
         outbuf_init(xch, &ob_tailbuf, OUTBUF_SIZE/4);
     }
+    */
+
+    if (!(compress_ctx = xc_compression_create_context(xch, dinfo->p2m_size)))
+    {
+        ERROR("Failed to create compression context");
+        goto out;
+    }
+    outbuf_init(xch, &ob_tailbuf, OUTBUF_SIZE/4);
 
     last_iter = !live;
 
@@ -1123,6 +1132,9 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
         snprintf(reportbuf, sizeof(reportbuf),
                  "Saving memory: iter %d (last sent %u skipped %u)",
+                 iter, sent_this_iter, skip_this_iter);
+
+        DPRINTF("Saving memory: iter %d (last sent %u skipped %u)",
                  iter, sent_this_iter, skip_this_iter);
 
         xc_report_progress_start(xch, reportbuf, dinfo->p2m_size);
@@ -1360,11 +1372,11 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 pfn      = pfn_type[j] & ~XEN_DOMCTL_PFINFO_LTAB_MASK;
                 pagetype = pfn_type[j] &  XEN_DOMCTL_PFINFO_LTAB_MASK;
 
-                if ( pagetype != 0 )
+                if ( pagetype !=0 )
                 {
                     /* If the page is not a normal data page, write out any
                        run of pages we may have previously acumulated */
-                    if ( !compressing && run )
+                    if ( iter == 1 && run )
                     {
                         if ( wruncached(io_fd, live,
                                        (char*)region_base+(PAGE_SIZE*(j-run)), 
@@ -1403,7 +1415,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                         goto out;
                     }
 
-                    if (compressing)
+                    if (iter > 1)
                     {
                         int c_err;
                         /* Mark pagetable page to be sent uncompressed */
@@ -1447,7 +1459,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 else
                 {
                     /* We have a normal page: accumulate it for writing. */
-                    if (compressing)
+                    if (iter > 1)
                     {
                         int c_err;
                         /* For checkpoint compression, accumulate the page in the
@@ -1478,7 +1490,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 }
             } /* end of the write out for this batch */
 
-            if ( run )
+            if ( iter == 1 && run )
             {
                 /* write out the last accumulated run of pages */
                 if ( wruncached(io_fd, live,
@@ -1489,6 +1501,17 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                           " (errno %d)", errno);
                     goto out;
                 }                        
+            }
+            else if (iter > 1)
+            {
+                if (wrcompressed(io_fd) < 0)
+                {
+                    ERROR("Error when writing compressed data"
+                          " iter %d\n", iter);
+                    rc = 1;
+                    goto out;
+                }
+
             }
 
             sent_this_iter += batch;
@@ -1578,6 +1601,19 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             print_stats(xch, dom, sent_this_iter, &time_stats, &shadow_stats, 1);
 
         }
+
+        /* sending flag to enable compression */
+        if (iter == 1)
+        {
+            i = XC_SAVE_ID_ENABLE_COMPRESSION;
+            if ( wrexact(io_fd, &i, sizeof(int)) )
+            {
+                PERROR("Error when writing enable_compression marker");
+                goto out;
+            }
+        }
+
+
     } /* end of infinite for loop */
 
     DPRINTF("All memory is saved\n");
@@ -1775,15 +1811,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
      * to enable it after the last_iter, when the XC_SAVE_ID_*
      * elements are sent.
      */
-    if (!compressing && (flags & XCFLAGS_CHECKPOINT_COMPRESS))
-    {
-        i = XC_SAVE_ID_ENABLE_COMPRESSION;
-        if ( wrexact(io_fd, &i, sizeof(int)) )
-        {
-            PERROR("Error when writing enable_compression marker");
-            goto out;
-        }
-    }
+    
 
     /* Zero terminate */
     i = 0;
