@@ -1606,11 +1606,16 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         if (iter == 1)
         {
             i = XC_SAVE_ID_ENABLE_COMPRESSION;
+            compressing = 1;
             if ( wrexact(io_fd, &i, sizeof(int)) )
             {
                 PERROR("Error when writing enable_compression marker");
                 goto out;
             }
+        }
+        else{
+
+
         }
 
 
@@ -2095,7 +2100,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     discard_file_cache(xch, io_fd, 1 /* flush */);
 
     /* Enable compression now, finally */
-    compressing = (flags & XCFLAGS_CHECKPOINT_COMPRESS);
+    //compressing = (flags & XCFLAGS_CHECKPOINT_COMPRESS);
 
     /* checkpoint_cb can spend arbitrarily long in between rounds */
     if (!rc && callbacks->checkpoint &&

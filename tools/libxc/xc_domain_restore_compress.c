@@ -780,7 +780,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
         return -1;
     }
 
-    // DPRINTF("reading batch of %d pages\n", count);
+    DPRINTF("reading batch of %d pages\n", count);
 
     switch ( count )
     {
@@ -1713,7 +1713,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         goto out;
     }
 
-    // DPRINTF("Received all pages (%d races)\n", nraces);
+    DPRINTF("Received all pages (%d races)\n", nraces);
 
     if ( !ctx->completed ) {
 
