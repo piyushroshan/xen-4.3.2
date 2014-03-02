@@ -42,8 +42,8 @@ CTRL_SRCS-$(CONFIG_MiniOS) += xc_minios.c
 GUEST_SRCS-y :=
 GUEST_SRCS-y += xg_private.c xc_suspend.c
 ifeq ($(CONFIG_MIGRATE),y)
-GUEST_SRCS-y += xc_domain_restore.c xc_domain_save.c
-GUEST_SRCS-y += xc_offline_page.c xc_compression.c
+GUEST_SRCS-y += xc_domain_restore_compress.c xc_domain_save_compress.c
+GUEST_SRCS-y += xc_offline_page.c xc_domain_compress.c
 else
 GUEST_SRCS-y += xc_nomigrate.c
 endif
