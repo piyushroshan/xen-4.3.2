@@ -1607,6 +1607,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         {
             i = XC_SAVE_ID_ENABLE_COMPRESSION;
             compressing = 1;
+            DPRINTF("Enabled compression\n");
             if ( wrexact(io_fd, &i, sizeof(int)) )
             {
                 PERROR("Error when writing enable_compression marker");
@@ -1630,6 +1631,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     {
         ob = &ob_tailbuf;
         ob->pos = 0;
+        DPRINTF("Changed buffer to ob_tailbuf\n");
     }
 
     {
@@ -2065,6 +2067,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     rc = 0;
 
  out:
+    DPRINTF("Completed\n");
     completed = 1;
 
     if ( !rc && callbacks->postcopy )
