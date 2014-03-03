@@ -1440,12 +1440,15 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                              * frequently, increase the PAGE_BUFFER_SIZE
                              * in xc_compression.c.
                              */
+
                             if (wrcompressed(io_fd) < 0)
                             {
                                 ERROR("Error when writing compressed"
                                       " data (4b)\n");
                                 goto out;
                             }
+
+                            DPRINTF("Written compressed as out of space in iter %d \n", iter);
                         }
                     }
                     else if ( wruncached(io_fd, live, page,
@@ -1477,6 +1480,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
                         if (c_err == -1)
                         {
+                            DPRINTF("Written compressed2 as out of space in iter %d \n", iter);
                             if (wrcompressed(io_fd) < 0)
                             {
                                 ERROR("Error when writing compressed"
@@ -1504,6 +1508,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             }
             else if (iter > 1)
             {
+                DPRINTF("Written compressed for iter %d \n", iter);
                 if (wrcompressed(io_fd) < 0)
                 {
                     ERROR("Error when writing compressed data"
