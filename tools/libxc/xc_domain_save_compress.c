@@ -1118,7 +1118,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         goto out;
     }
 
-  copypages:
+// copypages:
 #define wrexact(fd, buf, len) write_buffer(xch, last_iter, ob, (fd), (buf), (len))
 #define wruncached(fd, live, buf, len) write_uncached(xch, last_iter, ob, (fd), (buf), (len))
 #define wrcompressed(fd) write_compressed(xch, compress_ctx, last_iter, ob, (fd))
