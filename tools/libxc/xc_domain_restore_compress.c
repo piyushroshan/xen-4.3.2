@@ -785,7 +785,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
     switch ( count )
     {
     case 0:
-        // DPRINTF("Last batch read\n");
+        DPRINTF("Last batch read\n");
         return 0;
 
     case XC_SAVE_ID_ENABLE_VERIFY_MODE:
@@ -945,7 +945,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
          * after receiving the first tailbuf.
          */
         ctx->compressing = 1;
-        // DPRINTF("compression flag received");
+        DPRINTF("compression flag received");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     case XC_SAVE_ID_COMPRESSED_DATA:

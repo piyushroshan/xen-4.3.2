@@ -2070,12 +2070,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     DPRINTF("Completed\n");
     completed = 1;
 
-    if ( !rc && callbacks->postcopy )
+    /*if ( !rc && callbacks->postcopy )
         callbacks->postcopy(callbacks->data);
+        */
 
     /* guest has been resumed. Now we can compress data
      * at our own pace.
      */
+    
     if (!rc && compressing)
     {
         ob = &ob_pagebuf;
@@ -2093,6 +2095,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             goto out;
         }
     }
+    
 
     /* Flush last write and discard cache for file. */
     if ( ob && outbuf_flush(xch, ob, io_fd) < 0 ) {
@@ -2102,18 +2105,19 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
     discard_file_cache(xch, io_fd, 1 /* flush */);
 
-    /* Enable compression now, finally */
+    /* 
+    //Enable compression now, finally 
     //compressing = (flags & XCFLAGS_CHECKPOINT_COMPRESS);
 
-    /* checkpoint_cb can spend arbitrarily long in between rounds */
+    // checkpoint_cb can spend arbitrarily long in between rounds 
     if (!rc && callbacks->checkpoint &&
         callbacks->checkpoint(callbacks->data) > 0)
     {
-        /* reset stats timer */
+        // reset stats timer 
         print_stats(xch, dom, 0, &time_stats, &shadow_stats, 0);
 
         rc = 1;
-        /* last_iter = 1; */
+        // last_iter = 1; 
         if ( suspend_and_state(callbacks->suspend, callbacks->data, xch,
                                io_fd, dom, &info) )
         {
@@ -2132,6 +2136,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
         goto copypages;
     }
+    */
 
     if ( tmem_saved != 0 && live )
         xc_tmem_save_done(xch, dom);
