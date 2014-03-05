@@ -64,14 +64,13 @@ struct restore_ctx {
     struct domain_info_context dinfo;
 };
 
-FILE* logFile;
-logFile = fopen ("/home/roshan/restorelog.txt","ab+");
+FILE* logFile = fopen("/home/roshan/restorelog.txt","ab+");
 
 int logprintf(const char *fmt, ...)
 {
     va_list argz;
     int retlog;
-    va_start(args, fmt);
+    va_start(argz, fmt);
     retlog = vfprintf(logFile, fmt, argz);
     va_end(argz);
     return retlog;
