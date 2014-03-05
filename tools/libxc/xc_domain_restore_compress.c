@@ -1697,6 +1697,11 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
             break;  /* our work here is done */
         }
 
+        if (ctx->compressing){
+            pagebuf.compressing = 1;
+            logprintf("Pagebuffer compression enabled: Batch: %d\n",j);
+        }
+
         /* break pagebuf into batches */
         curbatch = 0;
         while ( curbatch < j ) {
@@ -1726,11 +1731,6 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         {
             discard_file_cache(xch, io_fd, 0 /* no flush */);
             m = 0;
-        }
-
-        if (ctx->compressing){
-            pagebuf.compressing = 1;
-            logprintf("Pagebuffer compression enabled from next batch");
         }
     }
 
