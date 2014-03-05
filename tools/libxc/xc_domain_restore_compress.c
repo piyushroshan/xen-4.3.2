@@ -970,13 +970,13 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
          * after receiving the first tailbuf.
          */
         ctx->compressing = 1;
-        logprintf("compression flag received");
+        logprintf("compression flag received\n");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     case XC_SAVE_ID_COMPRESSED_DATA:
 
         /* read the length of compressed chunk coming in */
-        logprintf("compressed data received");
+        logprintf("compressed data received\n");
         if ( RDEXACT(fd, &compbuf_size, sizeof(unsigned long)) )
         {
             PERROR("Error when reading compbuf_size");
@@ -1006,7 +1006,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
             PERROR("error read the generation id buffer location");
             return -1;
         }
-        logprintf("read generation id buffer address");
+        logprintf("read generation id buffer address\n");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     default:
@@ -1330,6 +1330,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
         /* Remus - page decompression */
         if (pagebuf->compressing)
         {
+            logprintf("Uncompressing page (pfn=%lx)\n", pfn);
             if (xc_compression_uncompress_page(xch, pagebuf->pages,
                                                pagebuf->compbuf_size,
                                                &pagebuf->compbuf_pos,
@@ -1486,7 +1487,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     struct restore_ctx *ctx = &_ctx;
     struct domain_info_context *dinfo = &ctx->dinfo;
 
-    logprintf("%s: starting restore of new domid %u", __func__, dom);
+    logprintf("%s: starting restore of new domid %u\n", __func__, dom);
 
     pagebuf_init(&pagebuf);
     memset(&tailbuf, 0, sizeof(tailbuf));
@@ -1726,6 +1727,9 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
             discard_file_cache(xch, io_fd, 0 /* no flush */);
             m = 0;
         }
+
+        if (ctx->compressing)
+            pagebuf.compressing = 1;
     }
 
     /*
@@ -1761,8 +1765,10 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
          * If sender had sent enable compression flag, switch to compressed
          * checkpoints mode once the first checkpoint is received.
          */
+        /*
         if (ctx->compressing)
             pagebuf.compressing = 1;
+            */
     }
 
     if (pagebuf.viridian != 0)
@@ -1803,7 +1809,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     tailbuf_free(&tailbuf);
     memcpy(&tailbuf, &tmptail, sizeof(tailbuf));
 
-    goto loadpages;
+    //goto loadpages;
 
   finish:
     if ( hvm )
