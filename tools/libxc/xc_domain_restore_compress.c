@@ -38,7 +38,8 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <stdarg.h>
+ #include <stdio.h>
 #include "xg_private.h"
 #include "xg_save_restore.h"
 #include "xc_dom.h"
