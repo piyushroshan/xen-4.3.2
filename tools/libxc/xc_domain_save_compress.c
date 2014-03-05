@@ -2082,10 +2082,13 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     /* guest has been resumed. Now we can compress data
      * at our own pace.
      */
+
+    DPRINTF("Output buffer size of tailbuffer %zu",ob->pos);
     
     if (!rc && compressing)
     {
         ob = &ob_pagebuf;
+        DPRINTF("Output buffer size before writing compressed %zu",ob->pos);
         if (wrcompressed(io_fd) < 0)
         {
             ERROR("Error when writing compressed data, after postcopy\n");
@@ -2101,6 +2104,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         }
     }
     
+    DPRINTF("Output buffer size before flush %zu",ob->pos);
 
     /* Flush last write and discard cache for file. */
     if ( ob && outbuf_flush(xch, ob, io_fd) < 0 ) {

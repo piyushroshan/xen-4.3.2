@@ -63,6 +63,18 @@ struct restore_ctx {
     struct domain_info_context dinfo;
 };
 
+FILE * pFile;
+pFile = fopen ("/home/roshan/restorelog.txt","ab+");
+
+int logprintf(const char *fmt, ...)
+{
+    va_list argz;
+    int ret;
+    ret = vfprintf_s(pFile, fmt, argz);
+    va_end(argz);
+    return ret;
+}
+
 #define HEARTBEAT_MS 1000
 
 #ifndef __MINIOS__
@@ -415,11 +427,13 @@ static int compat_buffer_qemu(xc_interface *xch, struct restore_ctx *ctx,
     }
 
     while( (rc = read(fd, qbuf+dlen, blen-dlen)) > 0 ) {
-        DPRINTF("Read %d bytes of QEMU data\n", rc);
+        //DPRINTF("Read %d bytes of QEMU data\n", rc);
+        logprintf("Read %d bytes of QEMU data\n", rc);
         dlen += rc;
 
         if (dlen == blen) {
-            DPRINTF("%d-byte QEMU buffer full, reallocating...\n", dlen);
+            //DPRINTF("%d-byte QEMU buffer full, reallocating...\n", dlen);
+            logprintf("%d-byte QEMU buffer full, reallocating...\n", dlen);
             blen += 4096;
             tmp = realloc(qbuf, blen);
             if ( !tmp ) {
@@ -498,7 +512,8 @@ static int dump_qemu(xc_interface *xch, uint32_t dom, struct tailbuf_hvm *buf)
     if ( !fp )
         return -1;
 
-    DPRINTF("Writing %d bytes of QEMU data\n", buf->qemubufsize);
+    //DPRINTF("Writing %d bytes of QEMU data\n", buf->qemubufsize);
+    logprintf("Writing %d bytes of QEMU data\n", buf->qemubufsize);
     if ( fwrite(buf->qemubuf, 1, buf->qemubufsize, fp) != buf->qemubufsize) {
         saved_errno = errno;
         fclose(fp);
@@ -635,6 +650,7 @@ static int buffer_tail_pv(xc_interface *xch, struct restore_ctx *ctx,
         }
     }
     // DPRINTF("Reading VCPUS: %d bytes\n", vcpulen);
+    logprintf("Reading VCPUS: %d bytes\n", vcpulen);
     if ( RDEXACT(fd, buf->vcpubuf, vcpulen) ) {
         PERROR("Error when reading ctxt");
         goto free_vcpus;
@@ -642,6 +658,7 @@ static int buffer_tail_pv(xc_interface *xch, struct restore_ctx *ctx,
 
     /* load shared_info_page */
     // DPRINTF("Reading shared info: %lu bytes\n", PAGE_SIZE);
+    logprintf("Reading shared info: %lu bytes\n", PAGE_SIZE);
     if ( RDEXACT(fd, buf->shared_info_page, PAGE_SIZE) ) {
         PERROR("Error when reading shared info page");
         goto free_vcpus;
@@ -780,16 +797,19 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
         return -1;
     }
 
-    DPRINTF("reading batch of %d pages\n", count);
+    //DPRINTF("reading batch of %d pages\n", count);
+    logprintf("reading batch of %d pages\n", count);
 
     switch ( count )
     {
     case 0:
-        DPRINTF("Last batch read\n");
+        //DPRINTF("Last batch read\n");
+        logprintf("Last batch read\n");
         return 0;
 
     case XC_SAVE_ID_ENABLE_VERIFY_MODE:
-        DPRINTF("Entering page verify mode\n");
+        //DPRINTF("Entering page verify mode\n");
+        logprintf("Entering page verify mode\n");
         buf->verify = 1;
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
@@ -860,7 +880,8 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     case XC_SAVE_ID_TMEM:
-        DPRINTF("xc_domain_restore start tmem\n");
+        //DPRINTF("xc_domain_restore start tmem\n");
+        logprintf("xc_domain_restore start tmem\n");
         if ( xc_tmem_restore(xch, dom, fd) ) {
             PERROR("error reading/restoring tmem");
             return -1;
@@ -902,7 +923,8 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
 
     case XC_SAVE_ID_LAST_CHECKPOINT:
         ctx->last_checkpoint = 1;
-        // DPRINTF("last checkpoint indication received");
+        //DPRINTF("last checkpoint indication received");
+        logprintf("last checkpoint indication received");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     case XC_SAVE_ID_HVM_ACPI_IOPORTS_LOCATION:
@@ -945,12 +967,13 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
          * after receiving the first tailbuf.
          */
         ctx->compressing = 1;
-        DPRINTF("compression flag received");
+        logprintf("compression flag received");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     case XC_SAVE_ID_COMPRESSED_DATA:
 
         /* read the length of compressed chunk coming in */
+        logprintf("compressed data received");
         if ( RDEXACT(fd, &compbuf_size, sizeof(unsigned long)) )
         {
             PERROR("Error when reading compbuf_size");
@@ -958,7 +981,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
         }
         if (!compbuf_size) return 1;
 
-        buf->compbuf_size += compbuf_size;
+        buf->compbuf_size += compbuf_size
         if (!(ptmp = realloc(buf->pages, buf->compbuf_size))) {
             ERROR("Could not (re)allocate compression buffer");
             return -1;
@@ -980,7 +1003,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
             PERROR("error read the generation id buffer location");
             return -1;
         }
-        DPRINTF("read generation id buffer address");
+        logprintf("read generation id buffer address");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
     default:
@@ -1136,7 +1159,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
                         if ( xc_domain_populate_physmap_exact(xch, dom, 1,
                                          SUPERPAGE_PFN_SHIFT, 0, &supermfn) != 0 )
                         {
-                            DPRINTF("No 2M page available for pfn 0x%lx, fall back to 4K page.\n",
+                            logprintf("No 2M page available for pfn 0x%lx, fall back to 4K page.\n",
                                     superpage_start);
                             /* If we're falling back from a failed allocation, subtract one
                              * from count, since the last page == pfn, which will behandled
@@ -1145,7 +1168,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
                             goto fallback;
                         }
 
-                        DPRINTF("Mapping superpage (%d) pfn %lx, mfn %lx\n", scount, superpage_start, supermfn);
+                        logprintf("Mapping superpage (%d) pfn %lx, mfn %lx\n", scount, superpage_start, supermfn);
                         for (k=0; k<scount; k++)
                         {
                             /* We just allocated a new mfn above; update p2m */
@@ -1160,7 +1183,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
                 }
                 
             fallback:
-                DPRINTF("Falling back %d pages pfn %lx\n", scount, superpage_start);
+                logprintf("Falling back %d pages pfn %lx\n", scount, superpage_start);
                 for (k=0; k<scount; k++)
                 {
                     ctx->p2m_batch[nr_mfns++] = superpage_start+k; 
@@ -1188,7 +1211,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
     /* Clean up any partial superpage candidates */
     if ( superpage_start != INVALID_P2M_ENTRY )
     {
-        DPRINTF("Falling back %d pages pfn %lx\n", scount, superpage_start);
+        logprintf("Falling back %d pages pfn %lx\n", scount, superpage_start);
         for (k=0; k<scount; k++)
         {
             ctx->p2m_batch[nr_mfns++] = superpage_start+k; 
@@ -1200,7 +1223,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
     /* Now allocate a bunch of mfns for this batch */
     if ( nr_mfns )
     {
-        DPRINTF("Mapping order 0,  %d; first pfn %lx\n", nr_mfns, ctx->p2m_batch[0]);
+        logprintf("Mapping order 0,  %d; first pfn %lx\n", nr_mfns, ctx->p2m_batch[0]);
     
         if (!ctx->hvm && ctx->superpages)
             rc = alloc_superpage_mfns(xch, dom, ctx, nr_mfns);
@@ -1341,7 +1364,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
                     ** under live migration since the pages type may have
                     ** changed by now (and we'll get an update later).
                     */
-                    DPRINTF("PT L%ld race on pfn=%08lx mfn=%08lx\n",
+                    logprintf("PT L%ld race on pfn=%08lx mfn=%08lx\n",
                             pagetype >> 28, pfn, mfn);
                     nraces++;
                     continue;
@@ -1362,7 +1385,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
             {
                 int v;
 
-                DPRINTF("************** pfn=%lx type=%lx gotcs=%08lx "
+                logprintf("************** pfn=%lx type=%lx gotcs=%08lx "
                         "actualcs=%08lx\n", pfn, pagebuf->pfn_types[pfn],
                         csum_page(region_base + (i + curbatch)*PAGE_SIZE),
                         csum_page(buf));
@@ -1411,7 +1434,6 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     uint32_t vcpuextstate_size = 0;
     unsigned long mfn, pfn;
     int nraces = 0;
-
     /* The new domain's shared-info frame number. */
     unsigned long shared_info_frame;
     unsigned char shared_info_page[PAGE_SIZE]; /* saved contents from file */
@@ -1461,7 +1483,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     struct restore_ctx *ctx = &_ctx;
     struct domain_info_context *dinfo = &ctx->dinfo;
 
-    DPRINTF("%s: starting restore of new domid %u", __func__, dom);
+    logprintf("%s: starting restore of new domid %u", __func__, dom);
 
     pagebuf_init(&pagebuf);
     memset(&tailbuf, 0, sizeof(tailbuf));
@@ -1493,7 +1515,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         PERROR("read: p2m_size");
         goto out;
     }
-    DPRINTF("%s: p2m_size = %lx\n", __func__, dinfo->p2m_size);
+    logprintf("%s: p2m_size = %lx\n", __func__, dinfo->p2m_size);
 
     if ( !get_platform_info(xch, dom,
                             &ctx->max_mfn, &ctx->hvirt_start, &ctx->pt_levels, &dinfo->guest_width) )
@@ -1609,7 +1631,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         j = pagebuf.nr_pages;
 
         DBGPRINTF("batch %d\n",j);
-
+        logprintf("batch %d\n",j);
         if ( j == 0 ) {
             /* catch vcpu updates */
             if (pagebuf.new_ctxt_format) {
@@ -1713,7 +1735,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         goto out;
     }
 
-    DPRINTF("Received all pages (%d races)\n", nraces);
+    logprintf("Received all pages (%d races)\n", nraces);
 
     if ( !ctx->completed ) {
 
@@ -1758,11 +1780,11 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
 
     if ( ctx->last_checkpoint )
     {
-        // DPRINTF("Last checkpoint, finishing\n");
+        logprintf("Last checkpoint, finishing\n");
         goto finish;
     }
 
-    // DPRINTF("Buffered checkpoint\n");
+    logprintf("Buffered checkpoint\n");
 
     if ( pagebuf_get(xch, ctx, &pagebuf, io_fd, dom) ) {
         PERROR("error when buffering batch, finishing");
@@ -1953,11 +1975,11 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     /* Flush final partial batch. */
     if ( (nr_pins != 0) && (xc_mmuext_op(xch, pin, nr_pins, dom) < 0) )
     {
-        PERROR("Failed to pin batch of %d page tables", nr_pins);
+        PERROR("Failed final to pin batch of %d page tables", nr_pins);
         goto out;
     }
 
-    DPRINTF("Memory reloaded (%ld pages)\n", ctx->nr_pfns);
+    logprintf("Memory reloaded (%ld pages)\n", ctx->nr_pfns);
 
     /* Get the list of PFNs that are not in the psuedo-phys map */
     {
@@ -1984,7 +2006,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
                 goto out;
             }
             else
-                DPRINTF("Decreased reservation by %d pages\n", tailbuf.u.pv.pfncount);
+               logprintf("Decreased reservation by %d pages\n", tailbuf.u.pv.pfncount);
         }
     }
 
@@ -1998,7 +2020,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
                               : sizeof(ctxt->x32)));
         vcpup += (dinfo->guest_width == 8) ? sizeof(ctxt->x64) : sizeof(ctxt->x32);
 
-        DPRINTF("read VCPU %d\n", i);
+        logprintf("read VCPU %d\n", i);
 
         if ( !new_ctxt_format )
             SET_FIELD(ctxt, flags, GET_FIELD(ctxt, flags) | VGCF_online);
@@ -2174,7 +2196,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
 
     memcpy(shared_info_page, tailbuf.u.pv.shared_info_page, PAGE_SIZE);
 
-    DPRINTF("Completed checkpoint load\n");
+    logprintf("Completed checkpoint load\n");
 
     /* Restore contents of shared-info page. No checking needed. */
     new_shared_info = xc_map_foreign_range(
@@ -2240,7 +2262,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
         goto out;
     }
 
-    DPRINTF("Domain ready to be built.\n");
+    logprintf("Domain ready to be built.\n");
     rc = 0;
     goto out;
 
@@ -2346,7 +2368,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
 
     fcntl(io_fd, F_SETFL, orig_io_fd_flags);
 
-    DPRINTF("Restore exit of domid %u with rc=%d\n", dom, rc);
+    logprintf("Restore exit of domid %u with rc=%d\n", dom, rc);
 
     return rc;
 }
