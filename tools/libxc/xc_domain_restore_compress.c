@@ -1699,7 +1699,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
 
         if (ctx->compressing){
             pagebuf.compressing = 1;
-            logprintf("Pagebuffer compression enabled: Batch: %d\n",j);
+            logprintf("Pagebuffer compression enabled: Batch: %d\n");
         }
 
         /* break pagebuf into batches */
