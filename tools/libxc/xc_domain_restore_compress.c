@@ -1617,7 +1617,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
      */
 
     n = m = 0;
- loadpages:
+// loadpages:
     for ( ; ; )
     {
         int j, curbatch;
@@ -1728,8 +1728,10 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
             m = 0;
         }
 
-        if (ctx->compressing)
+        if (ctx->compressing){
             pagebuf.compressing = 1;
+            logprintf("Pagebuffer compression enabled from next batch");
+        }
     }
 
     /*
