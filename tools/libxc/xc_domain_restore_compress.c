@@ -66,13 +66,15 @@ struct restore_ctx {
 
 void logprintf(const char*, ...);
 
-const FILE* logFile = fopen("/home/roshan/restorelog.txt","ab+");
+FILE* logFile;
 
 void logprintf(const char *fmt, ...)
 {
     va_list argz;
+    logFile = fopen("/home/roshan/restorelog.txt","ab+");
     va_start(argz, fmt);
-    retlog = vfprintf(logFile, fmt, argz);
+    vfprintf(logFile, fmt, argz);
+    fclose(logFile);
     va_end(argz);
 }
 
@@ -2356,7 +2358,6 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     if ( (rc != 0) && (dom != 0) )
         xc_domain_destroy(xch, dom);
     xc_hypercall_buffer_free(xch, ctxt);
-    fclose(logFile);
     free(mmu);
     free(ctx->p2m);
     free(pfn_type);
