@@ -64,16 +64,17 @@ struct restore_ctx {
     struct domain_info_context dinfo;
 };
 
-FILE * pFile;
-pFile = fopen ("/home/roshan/restorelog.txt","ab+");
+FILE* logFile;
+logFile = fopen ("/home/roshan/restorelog.txt","ab+");
 
 int logprintf(const char *fmt, ...)
 {
     va_list argz;
-    int ret;
-    ret = vfprintf_s(pFile, fmt, argz);
+    int retlog;
+    va_start(args, fmt);
+    retlog = vfprintf(pFile, fmt, argz);
     va_end(argz);
-    return ret;
+    return retlog;
 }
 
 #define HEARTBEAT_MS 1000
