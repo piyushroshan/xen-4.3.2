@@ -982,7 +982,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
         }
         if (!compbuf_size) return 1;
 
-        buf->compbuf_size += compbuf_size
+        buf->compbuf_size += compbuf_size;
         if (!(ptmp = realloc(buf->pages, buf->compbuf_size))) {
             ERROR("Could not (re)allocate compression buffer");
             return -1;
