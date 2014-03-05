@@ -72,7 +72,7 @@ int logprintf(const char *fmt, ...)
     va_list argz;
     int retlog;
     va_start(args, fmt);
-    retlog = vfprintf(pFile, fmt, argz);
+    retlog = vfprintf(logFile, fmt, argz);
     va_end(argz);
     return retlog;
 }
