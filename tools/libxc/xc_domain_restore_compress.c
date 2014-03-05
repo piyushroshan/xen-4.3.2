@@ -64,16 +64,16 @@ struct restore_ctx {
     struct domain_info_context dinfo;
 };
 
-FILE* logFile = fopen("/home/roshan/restorelog.txt","ab+");
+void logprintf(const char*, ...);
 
-int logprintf(const char *fmt, ...)
+const FILE* logFile = fopen("/home/roshan/restorelog.txt","ab+");
+
+void logprintf(const char *fmt, ...)
 {
     va_list argz;
-    int retlog;
     va_start(argz, fmt);
     retlog = vfprintf(logFile, fmt, argz);
     va_end(argz);
-    return retlog;
 }
 
 #define HEARTBEAT_MS 1000
@@ -2356,6 +2356,7 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
     if ( (rc != 0) && (dom != 0) )
         xc_domain_destroy(xch, dom);
     xc_hypercall_buffer_free(xch, ctxt);
+    fclose(logFile);
     free(mmu);
     free(ctx->p2m);
     free(pfn_type);
