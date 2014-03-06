@@ -1697,11 +1697,6 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
             break;  /* our work here is done */
         }
 
-        if (ctx->compressing){
-            pagebuf.compressing = 1;
-            logprintf("Pagebuffer compression enabled: Batch: %d\n");
-        }
-
         /* break pagebuf into batches */
         curbatch = 0;
         while ( curbatch < j ) {
@@ -1715,6 +1710,11 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
             nraces += brc;
 
             curbatch += MAX_BATCH_SIZE;
+        }
+
+        if (ctx->compressing){
+            pagebuf.compressing = 1;
+            logprintf("Pagebuffer compression enabled: Batch: %d\n");
         }
 
         pagebuf.nr_physpages = pagebuf.nr_pages = 0;
@@ -1768,9 +1768,12 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
          * checkpoints mode once the first checkpoint is received.
          */
         /*
-        if (ctx->compressing)
+
+        
+             if (ctx->compressing)
             pagebuf.compressing = 1;
             */
+        
     }
 
     if (pagebuf.viridian != 0)

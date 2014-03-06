@@ -1623,7 +1623,12 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
 
         }
-
+        i = 0;
+        if ( wrexact(io_fd, &i, sizeof(int)) )
+        {
+            PERROR("Error when writing to state file (6')");
+            goto out;
+        }
 
     } /* end of infinite for loop */
 
@@ -1632,13 +1637,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     /* After last_iter, buffer the rest of pagebuf & tailbuf data into a
      * separate output buffer and flush it after the compressed page chunks.
      */
+    /*
     if (compressing)
     {
         ob = &ob_tailbuf;
         ob->pos = 0;
         DPRINTF("Changed buffer to ob_tailbuf\n");
     }
-
+    */
     {
         struct chunk {
             int id;
@@ -1782,7 +1788,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             goto out;
         }
     }
-
+    
     if ( callbacks != NULL && callbacks->toolstack_save != NULL )
     {
         int id = XC_SAVE_ID_TOOLSTACK;
@@ -1826,12 +1832,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     
 
     /* Zero terminate */
-    i = 0;
-    if ( wrexact(io_fd, &i, sizeof(int)) )
-    {
-        PERROR("Error when writing to state file (6')");
-        goto out;
-    }
+    
 
     if ( hvm ) 
     {
@@ -2082,7 +2083,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     /* guest has been resumed. Now we can compress data
      * at our own pace.
      */
-
+    /*
     DPRINTF("Output buffer size of tailbuffer %zu",ob->pos);
     
     if (!rc && compressing)
@@ -2095,7 +2096,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             rc = 1;
             goto out;
         }
-        /* Append the tailbuf data to the main outbuf */
+        // Append the tailbuf data to the main outbuf 
         if ( wrexact(io_fd, ob_tailbuf.buf, ob_tailbuf.pos) )
         {
             rc = 1;
@@ -2105,7 +2106,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     }
     
     DPRINTF("Output buffer size before flush %zu",ob->pos);
-
+    */
     /* Flush last write and discard cache for file. */
     if ( ob && outbuf_flush(xch, ob, io_fd) < 0 ) {
         PERROR("Error when flushing output buffer");
