@@ -970,6 +970,7 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
          * after receiving the first tailbuf.
          */
         ctx->compressing = 1;
+        buf->compressing = 1;
         logprintf("compression flag received\n");
         return pagebuf_get_one(xch, ctx, buf, fd, dom);
 
@@ -1711,12 +1712,12 @@ int xc_domain_restore(xc_interface *xch, int io_fd, uint32_t dom,
 
             curbatch += MAX_BATCH_SIZE;
         }
-
+        /*
         if (ctx->compressing){
             pagebuf.compressing = 1;
             logprintf("Pagebuffer compression enabled: Batch: %d\n");
         }
-
+        */
         pagebuf.nr_physpages = pagebuf.nr_pages = 0;
         pagebuf.compbuf_pos = pagebuf.compbuf_size = 0;
 

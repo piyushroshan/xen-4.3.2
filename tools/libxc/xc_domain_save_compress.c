@@ -1623,12 +1623,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
 
         }
-        i = 0;
-        if ( wrexact(io_fd, &i, sizeof(int)) )
-        {
-            PERROR("Error when writing to state file (6')");
-            goto out;
-        }
+
 
     } /* end of infinite for loop */
 
@@ -1832,7 +1827,12 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     
 
     /* Zero terminate */
-    
+    i = 0;
+    if ( wrexact(io_fd, &i, sizeof(int)) )
+    {
+        PERROR("Error when writing to state file (6')");
+        goto out;
+    }
 
     if ( hvm ) 
     {
