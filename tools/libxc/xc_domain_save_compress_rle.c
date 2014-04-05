@@ -847,11 +847,6 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     DECLARE_HYPERCALL_BUFFER(unsigned long, to_send);
     unsigned long *to_fix = NULL;
 
-    DECLARE_HYPERCALL_BUFFER(unsigned long, to_skip_prev);
-    DECLARE_HYPERCALL_BUFFER(unsigned long, to_send_prev);
-    unsigned long *to_fix_prev = NULL;
-
-
     struct time_stats time_stats;
     xc_shadow_op_stats_t shadow_stats;
 
@@ -1026,24 +1021,13 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     to_skip = xc_hypercall_buffer_alloc_pages(xch, to_skip, NRPAGES(bitmap_size(dinfo->p2m_size)));
     to_fix  = calloc(1, bitmap_size(dinfo->p2m_size));
 
-    to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send, NRPAGES(bitmap_size(dinfo->p2m_size)));
-    to_skip_prev = xc_hypercall_buffer_alloc_pages(xch, to_skip, NRPAGES(bitmap_size(dinfo->p2m_size)));
-    to_fix_prev  = calloc(1, bitmap_size(dinfo->p2m_size));
-
     if ( !to_send || !to_fix || !to_skip )
     {
         ERROR("Couldn't allocate to_send array");
         goto out;
     }
 
-    if ( !to_send_prev || !to_fix_prev || !to_skip_prev )
-    {
-        ERROR("Couldn't allocate to_send_prev array");
-        goto out;
-    }
-
     memset(to_send, 0xff, bitmap_size(dinfo->p2m_size));
-    memset(to_send_prev, 0xff, bitmap_size(dinfo->p2m_size));
 
     if ( hvm )
     {
@@ -1191,15 +1175,13 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     DPRINTF("%d pfn= %08lx mfn= %08lx %d",
                             iter, (unsigned long)n,
                             hvm ? 0 : pfn_to_mfn(n),
-                            test_bit(n,  to_send));
+                            test_bit(n, to_send));
                     if ( !hvm && is_mapped(pfn_to_mfn(n)) )
                         DPRINTF("  [mfn]= %08lx",
                                 mfn_to_pfn(pfn_to_mfn(n)&0xFFFFF));
                     DPRINTF("\n");
                 }
 
-
-                //this if block is never executed in RLE compression
                 if ( completed )
                 {
                     /* for sparse bitmaps, word-by-word may save time */
@@ -1210,7 +1192,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                         continue;
                     }
 
-                    if ( !test_bit(n,  to_send) )
+                    if ( !test_bit(n, to_send) )
                         continue;
 
                     pfn_batch[batch] = n;
@@ -1639,9 +1621,10 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         }
         else{
 
+
         }
-        memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
-        
+
+
     } /* end of infinite for loop */
 
     DPRINTF("All memory is saved\n");
