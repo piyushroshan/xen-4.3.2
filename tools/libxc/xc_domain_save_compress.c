@@ -847,9 +847,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     DECLARE_HYPERCALL_BUFFER(unsigned long, to_send);
     unsigned long *to_fix = NULL;
 
-    DECLARE_HYPERCALL_BUFFER(unsigned long, to_skip_prev);
     DECLARE_HYPERCALL_BUFFER(unsigned long, to_send_prev);
-    unsigned long *to_fix_prev = NULL;
 
 
     struct time_stats time_stats;
