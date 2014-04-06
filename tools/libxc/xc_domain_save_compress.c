@@ -1024,7 +1024,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     to_skip = xc_hypercall_buffer_alloc_pages(xch, to_skip, NRPAGES(bitmap_size(dinfo->p2m_size)));
     to_fix  = calloc(1, bitmap_size(dinfo->p2m_size));
 
-    to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send, NRPAGES(bitmap_size(dinfo->p2m_size)));
+    to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send_prev, NRPAGES(bitmap_size(dinfo->p2m_size)));
 
     if ( !to_send || !to_fix || !to_skip )
     {
