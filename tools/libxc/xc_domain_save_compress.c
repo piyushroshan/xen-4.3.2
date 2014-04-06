@@ -1027,8 +1027,6 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     to_fix  = calloc(1, bitmap_size(dinfo->p2m_size));
 
     to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send, NRPAGES(bitmap_size(dinfo->p2m_size)));
-    to_skip_prev = xc_hypercall_buffer_alloc_pages(xch, to_skip, NRPAGES(bitmap_size(dinfo->p2m_size)));
-    to_fix_prev  = calloc(1, bitmap_size(dinfo->p2m_size));
 
     if ( !to_send || !to_fix || !to_skip )
     {
@@ -1036,7 +1034,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         goto out;
     }
 
-    if ( !to_send_prev || !to_fix_prev || !to_skip_prev )
+    if ( !to_send_prev )
     {
         ERROR("Couldn't allocate to_send_prev array");
         goto out;
@@ -1223,21 +1221,43 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 {
                     int dont_skip = (last_iter || (superpages && iter==1));
 
-                    if ( !dont_skip &&
-                         test_bit(n, to_send) &&
-                         test_bit(n, to_skip) )
-                        skip_this_iter++; /* stats keeping */
+                    //Phase 1
+                    if( iter==1 || last_iter || iter == 2 )
+                    {
 
-                    if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
-                           (test_bit(n, to_send) && dont_skip) ||
-                           (test_bit(n, to_fix)  && last_iter)) )
-                        continue;
+                        if ( !dont_skip &&
+                             test_bit(n, to_send) &&
+                             test_bit(n, to_skip) )
+                            skip_this_iter++; /* stats keeping */
 
-                    /* First time through, try to keep superpages in the same batch */
-                    if ( superpages && iter == 1
-                         && SUPER_PAGE_START(n)
-                         && batch + SUPERPAGE_NR_PFNS > MAX_BATCH_SIZE )
-                        break;
+                        if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
+                               (test_bit(n, to_send) && dont_skip) ||
+                               (test_bit(n, to_fix)  && last_iter)) )
+                            continue;
+
+                        /* First time through, try to keep superpages in the same batch */
+                        if ( superpages && iter == 1
+                             && SUPER_PAGE_START(n)
+                             && batch + SUPERPAGE_NR_PFNS > MAX_BATCH_SIZE )
+                            break;
+                    }
+                    else{
+                        
+                        if ( !dont_skip && test_bit(n, to_send_prev) &&
+                             test_bit(n, to_send) &&
+                             test_bit(n, to_skip) )
+                            skip_this_iter++; /* stats keeping */
+
+                        if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
+                               (test_bit(n, to_send) && dont_skip)) )
+                        {
+                            if (! test_bit(n,to_send_prev))
+                                continue;
+                        }
+
+                        if (! (test_bit(n, to_fix)  && last_iter))
+                            continue;
+                    }
 
                     /*
                     ** we get here if:
