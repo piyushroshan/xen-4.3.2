@@ -423,7 +423,7 @@ static int compat_buffer_qemu(xc_interface *xch, struct restore_ctx *ctx,
     int rc;
 
     /* currently save records tend to be about 7K */
-    blen = 8192;
+    blen = 16384;
     if ( !(qbuf = malloc(blen)) ) {
         ERROR("Error allocating QEMU buffer");
         return -1;
