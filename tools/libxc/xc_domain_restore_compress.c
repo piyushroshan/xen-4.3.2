@@ -1237,7 +1237,7 @@ static int apply_batch(xc_interface *xch, uint32_t dom, struct restore_ctx *ctx,
 
         if (rc)
         {
-            ERROR("Failed to allocate memory for batch.!\n"); 
+            ERROR("2nd error Failed to allocate memory for batch.!\n"); 
             errno = ENOMEM;
             return -1;
         }
