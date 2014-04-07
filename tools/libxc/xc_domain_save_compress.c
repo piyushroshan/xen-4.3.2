@@ -1220,7 +1220,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     int dont_skip = (last_iter || (superpages && iter==1));
 
                     //Phase 1
-                    if( iter==1 || last_iter || iter == 2 )
+                    if(true)
+                    //if( iter==1 || last_iter || iter == 2 )
                     {
 
                         if ( !dont_skip &&
