@@ -1027,6 +1027,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
     to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send_prev, NRPAGES(bitmap_size(dinfo->p2m_size)));
     to_send_prev2 = xc_hypercall_buffer_alloc_pages(xch, to_send_prev2, NRPAGES(bitmap_size(dinfo->p2m_size)));
+    to_send_phase2 = xc_hypercall_buffer_alloc_pages(xch, to_send_phase2, NRPAGES(bitmap_size(dinfo->p2m_size)));
 
     if ( !to_send || !to_fix || !to_skip )
     {
@@ -1034,7 +1035,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         goto out;
     }
 
-    if ( !to_send_prev || !to_send_prev2 )
+    if ( !to_send_prev || !to_send_prev2 || !to_send_phase2 )
     {
         ERROR("Couldn't allocate to_send_prev array");
         goto out;
@@ -1043,6 +1044,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     memset(to_send, 0xff, bitmap_size(dinfo->p2m_size));
     memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
     memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
+    memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
 
     if ( hvm )
     {
@@ -1224,6 +1226,13 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
                     //Phase 1
                     //if(true)
+                    if ( last_iter ){
+                        if(to_send_prev)
+                            set_bit(n, to_send);
+                        else if (to_send_prev2)
+                            set_bit(n,to_send);
+                    }
+                    
                     if( iter<=3 || last_iter)
                     {
 
@@ -1241,16 +1250,16 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     else{
 
                         if ((!test_bit(n, to_send_prev)) && (!test_bit(n, to_send)) && test_bit(n, to_send_prev2)){
-                            set_bit(n, to_send);
+                            set_bit(n, to_send_phase2);
                         }
                         
                         if ( !dont_skip &&
-                             test_bit(n, to_send) &&
+                             test_bit(n, to_send_phase2) &&
                              test_bit(n, to_skip) )
                             skip_this_iter++; /* stats keeping */
 
-                        if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
-                               (test_bit(n, to_send) && dont_skip) ||
+                        if ( !((test_bit(n, to_send_phase2) && !test_bit(n, to_skip)) ||
+                               (test_bit(n, to_send_phase2) && dont_skip) ||
                                (test_bit(n, to_fix)  && last_iter)) )
                             continue;
 
@@ -1659,15 +1668,15 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 PERROR("Error when writing enable_compression marker");
                 goto out;
             }
-
-
         }
         else{
             memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
             memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
 
         }
-        
+        if (!last_iter)
+            memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
+
     } /* end of infinite for loop */
 
     DPRINTF("All memory is saved\n");
