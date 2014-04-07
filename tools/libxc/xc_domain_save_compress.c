@@ -1244,7 +1244,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                         if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
                                (test_bit(n, to_send) && dont_skip)) )
                         {
-                            if (!(test_bit(n,to_send_prev))
+                            if (!(test_bit(n,to_send_prev)))
                             {
                                 DPRINTF("2nd Phase %d pfn= %08lx mfn= %08lx %d", iter, (unsigned long)n, pfn_to_mfn(n), test_bit(n,  to_send));
                                 continue;
