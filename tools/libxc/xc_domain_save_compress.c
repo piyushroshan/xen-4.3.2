@@ -848,6 +848,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     unsigned long *to_fix = NULL;
 
     DECLARE_HYPERCALL_BUFFER(unsigned long, to_send_prev);
+    DECLARE_HYPERCALL_BUFFER(unsigned long, to_send_prev2);
 
 
     struct time_stats time_stats;
@@ -1025,6 +1026,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     to_fix  = calloc(1, bitmap_size(dinfo->p2m_size));
 
     to_send_prev = xc_hypercall_buffer_alloc_pages(xch, to_send_prev, NRPAGES(bitmap_size(dinfo->p2m_size)));
+    to_send_prev2 = xc_hypercall_buffer_alloc_pages(xch, to_send_prev2, NRPAGES(bitmap_size(dinfo->p2m_size)));
 
     if ( !to_send || !to_fix || !to_skip )
     {
@@ -1032,14 +1034,15 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         goto out;
     }
 
-    if ( !to_send_prev )
+    if ( !to_send_prev || !to_send_prev2 )
     {
         ERROR("Couldn't allocate to_send_prev array");
         goto out;
     }
 
     memset(to_send, 0xff, bitmap_size(dinfo->p2m_size));
-    memset(to_send_prev, 0xff, bitmap_size(dinfo->p2m_size));
+    memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
+    memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
 
     if ( hvm )
     {
@@ -1221,7 +1224,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
                     //Phase 1
                     //if(true)
-                    if( iter==1 || last_iter || iter == 2 )
+                    if( iter<=3 || last_iter)
                     {
 
                         if ( !dont_skip &&
@@ -1236,31 +1239,28 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
                     }
                     else{
+
+                        if ((!test_bit(n, to_send_prev)) && (!test_bit(n, to_send)) && test_bit(n, to_send_prev2)){
+                            set_bit(n, to_send);
+                        }
                         
-                        if ( !dont_skip && test_bit(n, to_send_prev) &&
+                        if ( !dont_skip &&
                              test_bit(n, to_send) &&
                              test_bit(n, to_skip) )
                             skip_this_iter++; /* stats keeping */
 
                         if ( !((test_bit(n, to_send) && !test_bit(n, to_skip)) ||
-                               (test_bit(n, to_send) && dont_skip)) )
-                        {
-                            if (!(test_bit(n,to_send_prev)))
-                            {
-                                DPRINTF("2nd Phase %d pfn= %08lx mfn= %08lx %d", iter, (unsigned long)n, pfn_to_mfn(n), test_bit(n,  to_send));
-                                continue;
-                            }
-                        }
-
-                        if (!(test_bit(n, to_fix)  && last_iter))
+                               (test_bit(n, to_send) && dont_skip) ||
+                               (test_bit(n, to_fix)  && last_iter)) )
                             continue;
 
-                        /* First time through, try to keep superpages in the same batch */
+                    }
+
+                    /* First time through, try to keep superpages in the same batch */
                         if ( superpages && iter == 1
                              && SUPER_PAGE_START(n)
                              && batch + SUPERPAGE_NR_PFNS > MAX_BATCH_SIZE )
                             break;
-                    }
 
                     /*
                     ** we get here if:
@@ -1659,11 +1659,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 PERROR("Error when writing enable_compression marker");
                 goto out;
             }
-        }
-        else{
+
 
         }
-        memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
+        else{
+            memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
+            memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
+
+        }
         
     } /* end of infinite for loop */
 
