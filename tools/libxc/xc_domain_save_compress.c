@@ -1660,7 +1660,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         }
 
         if ( (iter >= max_iters) ||
-                 (iter > 3) && (sent_this_iter+skip_this_iter < 50) ||
+                 ((iter > 3) && (sent_this_iter+skip_this_iter < 50)) ||
                  (total_sent > dinfo->p2m_size*max_factor) )
         {
             last_iter_prev = 1;
