@@ -111,6 +111,7 @@ static ssize_t rdexact(xc_interface *xch, struct restore_ctx *ctx,
         len = read(fd, buf + offset, size - offset);
         if ( (len == -1) && ((errno == EINTR) || (errno == EAGAIN)) )
             continue;
+        /*
         if ( len == 0 ) {
             ERROR("0-length read");
             errno = 0;
@@ -119,6 +120,7 @@ static ssize_t rdexact(xc_interface *xch, struct restore_ctx *ctx,
             ERROR("read_exact_timed failed (read rc: %d, errno: %d)", len, errno);
             return -1;
         }
+        */
         offset += len;
     }
 
