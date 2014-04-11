@@ -1017,6 +1017,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     outbuf_init(xch, &ob_tailbuf, OUTBUF_SIZE/4);
 
     last_iter = !live;
+    last_iter_prev = 0;
 
     /* pretend we sent all the pages last iteration */
     sent_last_iter = dinfo->p2m_size;
@@ -1227,14 +1228,12 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
                     //Phase 1
                     //if(true)
-                    if ( last_iter ){
-                        if(to_send_prev)
-                            set_bit(n, to_send);
-                        else if (to_send_prev2)
+                    if ( last_iter_prev ){
+                        if(test_bit(n,to_send_prev) || test_bit(n,to_send_prev2))
                             set_bit(n,to_send);
                     }
 
-                    if( iter<=3 || last_iter)
+                    if( iter==1 || last_iter_prev || last_iter)
                     {
 
                         if ( !dont_skip &&
@@ -1591,6 +1590,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             DPRINTF("(of which %ld were fixups)\n", needed_to_fix  );
         }
 
+        /*
         if ( last_iter && debug )
         {
             int id = XC_SAVE_ID_ENABLE_VERIFY_MODE;
@@ -1598,7 +1598,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             debug = 0;
             DPRINTF("Entering debug resend-all mode\n");
 
-            /* send "-1" to put receiver into debug mode */
+            // send "-1" to put receiver into debug mode 
             if ( wrexact(io_fd, &id, sizeof(int)) )
             {
                 PERROR("Error when writing to state file (6)");
@@ -1607,15 +1607,21 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             continue;
         }
+        */
 
         if ( last_iter )
             break;
 
-        if ( live )
-        {
-            if ( (iter >= max_iters) ||
+        if ( (iter >= max_iters) ||
                  (sent_this_iter+skip_this_iter < 50) ||
                  (total_sent > dinfo->p2m_size*max_factor) )
+        {
+            last_iter_prev = 1;
+        }
+
+        if ( live )
+        {
+            if ( last_iter_prev = 1 )
             {
                 DPRINTF("Start last iteration\n");
                 last_iter = 1;
@@ -1669,14 +1675,16 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 PERROR("Error when writing enable_compression marker");
                 goto out;
             }
+            memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
         }
         else{
             memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
             memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
 
         }
-        if (!last_iter)
+        if (!last_iter){
             memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
+        }
 
     } /* end of infinite for loop */
 
