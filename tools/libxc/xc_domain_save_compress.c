@@ -1612,16 +1612,11 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         if ( last_iter )
             break;
 
-        if ( (iter >= max_iters) ||
-                 (sent_this_iter+skip_this_iter < 50) ||
-                 (total_sent > dinfo->p2m_size*max_factor) )
-        {
-            last_iter_prev = 1;
-        }
+        
 
         if ( live )
         {
-            if ( last_iter_prev = 1 )
+            if ( last_iter_prev )
             {
                 DPRINTF("Start last iteration\n");
                 last_iter = 1;
@@ -1662,6 +1657,13 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             print_stats(xch, dom, sent_this_iter, &time_stats, &shadow_stats, 1);
 
+        }
+
+        if ( (iter >= max_iters) ||
+                 (sent_this_iter+skip_this_iter < 50) ||
+                 (total_sent > dinfo->p2m_size*max_factor) )
+        {
+            last_iter_prev = 1;
         }
 
         /* sending flag to enable compression */
