@@ -1592,7 +1592,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             DPRINTF("(of which %ld were fixups)\n", needed_to_fix  );
         }
 
-        /*
+        
         if ( last_iter && debug )
         {
             int id = XC_SAVE_ID_ENABLE_VERIFY_MODE;
@@ -1609,7 +1609,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             continue;
         }
-        */
+        
 
         if ( last_iter )
             break;
@@ -1646,14 +1646,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
 
             }
-            
+
             if( iter == 1){
                 memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
                 memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
             }
             else{
-                memcpy(to_send_prev2, to_send_prev, dinfo->p2m_size);
-                memcpy(to_send_prev, to_send, dinfo->p2m_size);
+                memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
+                memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
             }
 
             if ( xc_shadow_control(xch, dom,
