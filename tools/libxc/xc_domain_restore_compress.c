@@ -78,7 +78,7 @@ void logprintf(const char *fmt, ...)
     va_end(argz);
 }
 
-#define HEARTBEAT_MS 1000
+#define HEARTBEAT_MS 10000
 
 #ifndef __MINIOS__
 static ssize_t rdexact(xc_interface *xch, struct restore_ctx *ctx,
