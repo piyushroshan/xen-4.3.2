@@ -1584,7 +1584,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         if ( last_iter )
         {
             print_stats( xch, dom, sent_this_iter, &time_stats, &shadow_stats, 1);
-
+            DPRINTF("Saving memory: iter %d (last sent %u skipped %u)",
+                 iter, sent_this_iter, skip_this_iter);
             DPRINTF("Total pages sent= %ld (%.2fx)\n",
                     total_sent, ((float)total_sent)/dinfo->p2m_size );
             DPRINTF("(of which %ld were fixups)\n", needed_to_fix  );
@@ -1664,6 +1665,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                  (total_sent > dinfo->p2m_size*max_factor) )
         {
             last_iter_prev = 1;
+            DPRINTF("Start previous to last iteration\n");
         }
 
         /* sending flag to enable compression */
@@ -1678,6 +1680,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 goto out;
             }
             memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
+            memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
         }
         else{
             memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
