@@ -1313,6 +1313,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 
                 batch++;
             }
+            if( iter == 1){
+                memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
+                memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
+            }
+            else{
+                memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
+                memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
+            }
 
             if ( batch == 0 )
                 goto skip; /* vanishingly unlikely... */
@@ -1679,14 +1687,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 PERROR("Error when writing enable_compression marker");
                 goto out;
             }
-            memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
-            memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
         }
-        else{
-            memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
-            memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
 
-        }
         if (!last_iter){
             memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
         }
