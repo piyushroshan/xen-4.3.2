@@ -2245,7 +2245,9 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
     xc_hypercall_buffer_free_pages(xch, to_send, NRPAGES(bitmap_size(dinfo->p2m_size)));
     xc_hypercall_buffer_free_pages(xch, to_skip, NRPAGES(bitmap_size(dinfo->p2m_size)));
-
+    xc_hypercall_buffer_free_pages(xch, to_send_prev, NRPAGES(bitmap_size(dinfo->p2m_size)));
+    xc_hypercall_buffer_free_pages(xch, to_send_prev2, NRPAGES(bitmap_size(dinfo->p2m_size)));
+    xc_hypercall_buffer_free_pages(xch, to_send_phase2, NRPAGES(bitmap_size(dinfo->p2m_size)));
     free(pfn_type);
     free(pfn_batch);
     free(pfn_err);
