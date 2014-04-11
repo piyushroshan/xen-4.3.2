@@ -808,7 +808,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     xc_dominfo_t info;
     DECLARE_DOMCTL;
 
-    int rc = 1, frc, i, j, last_iter = 0, iter = 0;
+    int rc = 1, frc, i, j, last_iter = 0, last_iter_prev, iter = 0;
     int live  = (flags & XCFLAGS_LIVE);
     int debug = (flags & XCFLAGS_DEBUG);
     int superpages = !!hvm;
