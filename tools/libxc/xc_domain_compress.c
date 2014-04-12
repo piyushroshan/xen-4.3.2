@@ -40,11 +40,11 @@
 #include "xc_dom.h"
 
 /* Page Cache for Delta Compression*/
-#define DELTA_CACHE_SIZE (XC_PAGE_SIZE * 16384)
+#define DELTA_CACHE_SIZE (XC_PAGE_SIZE * 131072)
 
 /* Internal page buffer to hold dirty pages as cache
  */
-#define PAGE_BUFFER_SIZE (XC_PAGE_SIZE * 16384)
+#define PAGE_BUFFER_SIZE (XC_PAGE_SIZE * 131072)
 
 struct cache_page
 {
