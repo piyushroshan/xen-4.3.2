@@ -62,6 +62,7 @@ struct outbuf {
     int write_count;
 };
 
+static unsigned long compressed_size = 0;
 #define OUTBUF_SIZE (16384 * 1024)
 
 /* grep fodder: machine_to_phys */
@@ -257,6 +258,8 @@ static int write_compressed(xc_interface *xch, comp_ctx *compress_ctx,
             PERROR("Error when writing marker (errno %d)", errno);
             return -1;
         }
+
+        compressed_size += (long) sizeof(compbuf_len);
 
         if (outbuf_hardwrite(xch, ob, fd, &compbuf_len, sizeof(compbuf_len)) < 0)
         {
@@ -899,6 +902,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
     int compressing = 0;
 
     int completed = 0;
+
+    compressed_size = 0;
 
     DPRINTF("%s: starting save of domid %u", __func__, dom);
 
@@ -2138,7 +2143,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
  out:
     DPRINTF("Completed\n");
     completed = 1;
-
+    DPRINTF("Size of sent compressed data = %lu \n", compressed_size);
     /*if ( !rc && callbacks->postcopy )
         callbacks->postcopy(callbacks->data);
         */
