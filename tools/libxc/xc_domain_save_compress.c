@@ -1189,31 +1189,21 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             {
                 int n = N;
 
-                if ( debug )
-                {
-                    DPRINTF("%d pfn= %08lx mfn= %08lx %d",
-                            iter, (unsigned long)n,
-                            hvm ? 0 : pfn_to_mfn(n),
-                            test_bit(n,  to_send));
-                    if ( !hvm && is_mapped(pfn_to_mfn(n)) )
-                        DPRINTF("  [mfn]= %08lx",
-                                mfn_to_pfn(pfn_to_mfn(n)&0xFFFFF));
-                    DPRINTF("\n");
-                }
 
 
+                /*
                 //this if block is never executed in RLE compression
                 if ( completed )
                 {
-                    /* for sparse bitmaps, word-by-word may save time */
+                    // for sparse bitmaps, word-by-word may save time 
                     if ( !to_send[N >> ORDER_LONG] )
                     {
-                        /* incremented again in for loop! */
+                        // incremented again in for loop! 
                         N += BITS_PER_LONG - 1;
                         continue;
                     }
 
-                    if ( !test_bit(n,  to_send) )
+                    if ( !test_bit(n, to_send) )
                         continue;
 
                     pfn_batch[batch] = n;
@@ -1224,6 +1214,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                 }
                 else
                 {
+                    */
+                    
                     int dont_skip = (last_iter || (superpages && iter==1));
 
                     //Phase 1
@@ -1309,8 +1301,8 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     }
 
                     clear_bit(n, to_fix);
-                }
                 
+                //}
                 batch++;
             }
             
@@ -1459,12 +1451,14 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     race = 
                         canonicalize_pagetable(ctx, pagetype, pfn, spage, page); 
 
+                    /*
                     if ( race && !live )
                     {
                         ERROR("Fatal PT race (pfn %lx, type %08lx)", pfn,
                               pagetype);
                         goto out;
                     }
+                    */
 
                     if (iter > 1)
                     {
@@ -1557,7 +1551,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     goto out;
                 }                        
             }
-            else if (iter > 1)
+            else
             {
                 DPRINTF("Written compressed for iter %d \n", iter);
                 if (wrcompressed(io_fd) < 0)
@@ -1592,7 +1586,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             DPRINTF("(of which %ld were fixups)\n", needed_to_fix  );
         }
 
-        
+        /*
         if ( last_iter && debug )
         {
             int id = XC_SAVE_ID_ENABLE_VERIFY_MODE;
@@ -1609,6 +1603,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             continue;
         }
+        */
         
 
         if ( last_iter )
@@ -1691,9 +1686,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
             }
         }
 
-        if (!last_iter){
-            memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
-        }
+        memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
 
     } /* end of infinite for loop */
 
