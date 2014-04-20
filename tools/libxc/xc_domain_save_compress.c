@@ -62,7 +62,7 @@ struct outbuf {
     int write_count;
 };
 
-static unsigned long compressed_size = 0;
+static size_t compressed_size = 0;
 #define OUTBUF_SIZE (16384 * 1024)
 
 /* grep fodder: machine_to_phys */
@@ -253,13 +253,14 @@ static int write_compressed(xc_interface *xch, comp_ctx *compress_ctx,
         if (!rc)
             return 0;
 
+        compressed_size += (size_t) sizeof(marker);
         if (outbuf_hardwrite(xch, ob, fd, &marker, sizeof(marker)) < 0)
         {
             PERROR("Error when writing marker (errno %d)", errno);
             return -1;
         }
 
-        compressed_size += (long) sizeof(compbuf_len);
+        compressed_size += (size_t) sizeof(compbuf_len);
 
         if (outbuf_hardwrite(xch, ob, fd, &compbuf_len, sizeof(compbuf_len)) < 0)
         {
@@ -1647,13 +1648,10 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             }
 
-            if( iter == 1){
-                memset(to_send_prev, 0x00, bitmap_size(dinfo->p2m_size));
-                memset(to_send_prev2, 0x00, bitmap_size(dinfo->p2m_size));
-            }
-            else{
+            if( iter > 1)
                 memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
                 memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
+                DPRINTF("Compressed data sent in iter %d : %lu", iter, compressed_size);
             }
 
             if ( xc_shadow_control(xch, dom,
@@ -1692,6 +1690,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
         }
 
         memset(to_send_phase2, 0x00, bitmap_size(dinfo->p2m_size));
+
 
     } /* end of infinite for loop */
 
