@@ -1648,7 +1648,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
 
             }
 
-            if( iter > 1)
+            if( iter > 1){
                 memcpy(to_send_prev2, to_send_prev, bitmap_size(dinfo->p2m_size));
                 memcpy(to_send_prev, to_send, bitmap_size(dinfo->p2m_size));
                 DPRINTF("Compressed data sent in iter %d : %lu", iter, compressed_size);
