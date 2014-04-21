@@ -260,7 +260,7 @@ static int write_compressed(xc_interface *xch, comp_ctx *compress_ctx,
             return -1;
         }
 
-        compressed_size += (size_t) sizeof(compbuf_len);
+        compressed_size += (size_t) compbuf_len;
 
         if (outbuf_hardwrite(xch, ob, fd, &compbuf_len, sizeof(compbuf_len)) < 0)
         {
