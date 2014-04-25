@@ -983,7 +983,11 @@ static int pagebuf_get_one(xc_interface *xch, struct restore_ctx *ctx,
             PERROR("Error when reading compbuf_size");
             return -1;
         }
-        if (!compbuf_size) return 1;
+        if (!compbuf_size) {
+            logprintf("compressed data end-marker\n");
+            return 1;
+        }
+            
 
         buf->compbuf_size += compbuf_size;
         if (!(ptmp = realloc(buf->pages, buf->compbuf_size))) {
