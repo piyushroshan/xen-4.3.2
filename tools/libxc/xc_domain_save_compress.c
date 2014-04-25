@@ -90,9 +90,9 @@ static size_t compressed_size = 0;
 
 #define SUPER_PAGE_START(pfn)    (((pfn) & (SUPERPAGE_NR_PFNS-1)) == 0 )
 
-void logprintf(const char*, ...);
+void logprintf_s(const char*, ...);
 
-FILE* logFile;
+FILE* logFile_s;
 
 static uint64_t tv_to_us(struct timeval *new)
 {
@@ -100,13 +100,13 @@ static uint64_t tv_to_us(struct timeval *new)
 }
 
 
-void logprintf(const char *fmt, ...)
+void logprintf_s(const char *fmt, ...)
 {
     va_list argz;
-    logFile = fopen("/home/roshan/savelog.txt","ab+");
+    logFile_s = fopen("/home/roshan/savelog.txt","ab+");
     va_start(argz, fmt);
-    vfprintf(logFile, fmt, argz);
-    fclose(logFile);
+    vfprintf(logFile_s, fmt, argz);
+    fclose(logFile_s);
     va_end(argz);
 }
 
@@ -1486,7 +1486,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     {
                         int c_err;
                         /* Mark pagetable page to be sent uncompressed */
-                        logprintf("Adding page %lu", pfn);
+                        logprintf_s("Adding page %lu", pfn);
                         c_err = xc_compression_add_page(xch, compress_ctx, page,
                                                         pfn, 1 /* raw page */);
                         if (c_err == -2) /* OOB PFN */
