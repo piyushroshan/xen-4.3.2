@@ -90,10 +90,15 @@ static size_t compressed_size = 0;
 
 #define SUPER_PAGE_START(pfn)    (((pfn) & (SUPERPAGE_NR_PFNS-1)) == 0 )
 
+void logprintf(const char*, ...);
+
+FILE* logFile;
+
 static uint64_t tv_to_us(struct timeval *new)
 {
     return (new->tv_sec * 1000000) + new->tv_usec;
 }
+
 
 void logprintf(const char *fmt, ...)
 {
