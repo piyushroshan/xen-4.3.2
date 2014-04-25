@@ -1486,7 +1486,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                     {
                         int c_err;
                         /* Mark pagetable page to be sent uncompressed */
-                        logprintf_s("Adding page %lu", pfn);
+                        logprintf_s("Pagetabe pfn= %lu \n", pfn);
                         c_err = xc_compression_add_page(xch, compress_ctx, page,
                                                         pfn, 1 /* raw page */);
                         if (c_err == -2) /* OOB PFN */
@@ -1536,6 +1536,7 @@ int xc_domain_save(xc_interface *xch, int io_fd, uint32_t dom, uint32_t max_iter
                         /* For checkpoint compression, accumulate the page in the
                          * page buffer, to be compressed later.
                          */
+                        logprintf_s("Page pfn = %lu \n", pfn);
                         c_err = xc_compression_add_page(xch, compress_ctx, spage,
                                                         pfn, 0 /* not raw page */);
 
